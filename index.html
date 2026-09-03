@@ -604,6 +604,13 @@
             const n = (name || '?').trim();
             return n ? n[0].toUpperCase() : '?';
         }
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
 
         /* ================= APP STATE ================= */
         var ME = null;
@@ -710,6 +717,34 @@
         }
         function myPlayerIndex(room) {
             return room.players.findIndex(p => p.id === ME.id);
+        }
+
+        async function shareSiteUrl() {
+            const shareData = {
+                title: 'Cards Against Humanity in Japanese',
+                text: 'お題×回答カードゲームで遊ぼう！',
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        copyToClipboard(window.location.href);
+                    }
+                }
+            } else {
+                copyToClipboard(window.location.href);
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('URLをコピーしました！');
+            }).catch(() => {
+                showToast('URLのコピーに失敗しました');
+            });
         }
 
         async function createRoom() {
@@ -910,6 +945,7 @@
         window.onNameInput = (v) => { nameDraft = v; };
         window.onCodeInput = (v) => { joinCodeDraft = v.toUpperCase().slice(0, 4); };
         window.setHomeMode = (m) => { homeMode = m; createErr = ''; joinErr = ''; render(); };
+        window.shareSiteUrl = shareSiteUrl;
         window.createRoom = createRoom;
         window.joinRoom = joinRoom;
         window.startGame = startGame;
@@ -938,8 +974,8 @@
   <div class="wrap">
     <div style="margin-top:4vh;">
       <div class="brand">
-        <h1 class="brand-title">Cards Against Humanity in Japanese</h1>
-        <p class="brand-sub">お題に合った一番面白いカードを選択すること。<br>選ばれたら1pt。先に${TARGET_SCORE}pt獲った人が勝ち。</p>
+        <h1 class="brand-title">お題 × 回答</h1>
+        <p class="brand-sub">お題に合った一番面白いカードを出す。<br>選ばれたら1pt。先に${TARGET_SCORE}pt獲った人が勝ち。</p>
       </div>
 
       <div class="panel">
@@ -965,7 +1001,11 @@
         <div class="err-msg">${escapeHtml(isCreate ? createErr : joinErr)}</div>
       </div>
 
-      <p class="rules-note">ゲーム開始には、3人以上が必要。お題役以外の全員がカードを提出し、お題役が判定すること。</p>
+      <button class="btn btn-ghost btn-sm" style="margin-top:16px; width:100%;" onclick="shareSiteUrl()">
+        🔗 サイトのURLを共有
+      </button>
+
+      <p class="rules-note">3人以上でプレイ可能。お題役以外の全員がカードを提出し、お題役が判定します。</p>
     </div>
   </div>`;
         }
